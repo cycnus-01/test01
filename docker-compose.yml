@@ -1,0 +1,63 @@
+services:
+#ADMIN
+  admin:
+    build: .
+    ports:
+    - '${ADMIN_APP_PORT}:80'
+    environment:
+      COMPOSER_ALLOW_SUPERUSER: 1
+    volumes:
+    - ./admin:/var/www/html:cached
+    working_dir: /var/www/html
+    tty: true
+    platform: linux/x86_64
+    networks:
+      - backend
+    depends_on:
+      - mariadb
+#FRONT
+  front:
+    build: .
+    ports:
+    - '${FRONT_APP_PORT}:80'
+    environment:
+      COMPOSER_ALLOW_SUPERUSER: 1
+    volumes:
+    - ./front:/var/www/html:cached
+    working_dir: /var/www/html
+    tty: true
+    platform: linux/x86_64
+    networks:
+      - backend
+    depends_on:
+      - mariadb
+#Mailサーバー(test用)
+  mailhog:
+    image: mailhog/mailhog:v1.0.1
+    ports:
+      - "8025:8025"
+      - "1025:1025"
+    networks:
+      - backend
+#DB
+  mariadb:
+    image: mariadb:11.1.2
+    environment:
+      MYSQL_ROOT_PASSWORD: '${DB_ROOT_PASSWORD}'
+      MYSQL_DATABASE: '${DB_DATABASE}'
+      MYSQL_USER: '${DB_USER}'
+      MYSQL_PASSWORD: '${DB_PASSWORD}'
+      TZ: '${TZ}' 
+    networks:
+      - backend
+    ports:
+      - '${FORWARD_DB_PORT}:3306'
+    restart: always
+    volumes:
+      - databaseVolume:/var/lib/mysql
+      - ./logs:/var/log/mysql
+volumes:
+    databaseVolume:
+networks:
+    backend:
+        driver: bridge
